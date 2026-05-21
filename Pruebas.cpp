@@ -1,32 +1,24 @@
 #include <iostream>
-#include <thread>
-#include <chrono>
-
-void showLoadingBar(int totalDuration) {
-    int barWidth = 40;
-    float progress = 0.0;
-
-    while (progress <= 1.0) {
-        std::cout << "[";
-        int pos = barWidth * progress;
-        for (int i = 0; i < barWidth; ++i) {
-            if (i < pos) std::cout << "=";
-            else if (i == pos) std::cout << ">";
-            else std::cout << " ";
-        }
-        std::cout << "] " << int(progress * 100.0) << " %\r";
-        std::cout.flush();
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(totalDuration / 20)); 
-        progress += 0.05;
-    }
-    std::cout << std::endl;
-}
+#include <random>
+#include <chrono> // Nueva librería necesaria para medir el tiempo
 
 int main() {
-    std::cout << "Starting download..." << std::endl;
-    showLoadingBar(4000); // 2 seconds simulation
-    std::cout << "Completed!" << std::endl;
+    // 1. Obtener los microsegundos actuales del reloj del sistema
+    unsigned seed = std::chrono::steady_clock::now().time_since_epoch().count();
+
+    // 2. Inicializar el motor usando esa semilla temporal
+    std::mt19937 gen(seed);
+
+    // 3. Definir la distribución (rango de 1 a 100)
+    std::uniform_int_distribution<int> distr(1, 100);
+
+    // 4. Declarar y asignar las variables aleatorias
+    int var1 = distr(gen);
+    int var2 = distr(gen);
+
+    std::cout << "Variable 1: " << var1 << std::endl;
+    std::cout << "Variable 2: " << var2 << std::endl;
+
     return 0;
 }
 
