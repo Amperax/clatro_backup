@@ -102,7 +102,8 @@ int logicaApuestas(int saldoRonda, string accion, string codigo, int* apuesta){
 				cout<<"\033[2J\033[3J\033[H"<<flush;
 				continue;
 			}
-			if (*apuesta > saldoRonda || *apuesta < 0){
+			cin.ignore(10000, '\n');
+			if (*apuesta > saldoRonda || *apuesta <= 0){
 				cout<<"\nValor de apuesta invalido, por favor intente de nuevo\n\n";
 				this_thread::sleep_for(chrono::milliseconds(2000));
 				//Pendiente con esto de aqui abajo
@@ -110,15 +111,11 @@ int logicaApuestas(int saldoRonda, string accion, string codigo, int* apuesta){
 			} else if (*apuesta <= saldoRonda && *apuesta > 0){
 				cout<<"Apostara $"<<*apuesta<<endl;
 				cout<<"Saldo $"<<saldoRonda - *apuesta<<endl<<endl;
-				break;
+				saldoRonda -= *apuesta;
+				return saldoRonda;
 			}
 		}
-		
 	} else if (accion == "calc"){
-		
-		//Este te descuenta la apuesta para hacer los calculos reales
-		saldoRonda -= *apuesta;
-		
 		if (codigo == "E"){
 			return saldoRonda + *apuesta;
 		} else if (codigo == "W"){
@@ -141,7 +138,7 @@ int logicaApuestas(int saldoRonda, string accion, string codigo, int* apuesta){
 }
 
 //Logica General de las cartas
-int logicaCartas(){
+int logicaCartas(int saldo, int* apuesta){
 	vector<vector<int> > cartas = {
 	{2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11},
 	{2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11},
@@ -191,6 +188,15 @@ int logicaCartas(){
 		}
 	}
 	
+	//Muestra la suma de las cartas entregadas
+	int sumaPlayer = 0;
+		
+	for (int i = 0; i < cartasPlayer.size(); i++){
+		sumaPlayer += cartasPlayer[i];
+	}
+	
+	cout<<"- Total: "<<sumaPlayer<<endl;
+	
 	//Le da las cartas al dealer, las guarda en un vector, muestra una carta
 	cout<<"\nLa carta visible del dealer es:\n";
 	vector<int> cartasDealer;
@@ -218,7 +224,7 @@ int logicaCartas(){
 	
 	//Si llegaste a 21 de una, analiza si el dealer también lo hizo
 	//Si no lo hizo, es victoria instantanea para el jugador
-	int sumaPlayer = 0;
+	sumaPlayer = 0;
 	int sumaDealer = 0;
 		
 	for (int i = 0; i < cartasPlayer.size(); i++){
@@ -230,7 +236,7 @@ int logicaCartas(){
 	}
 		
 	if (sumaDealer == 21 && sumaPlayer != 21){
-		cout<<"El dealer saco 21!\n";
+		cout<<"\nEl dealer saco 21!\n";
 		//Return 3 significa perder la partida 
 		return 3;
 	}
@@ -252,6 +258,7 @@ int logicaCartas(){
 		accionesPrint();
 		cout<<"Seleccione su accion: ";
 		cin>>playCard;
+		cout<<"\n";
 		if (cin.fail()){
 			cin.clear();
 			//El primer parametro dentro del ignore es una cantidad de letras que el programa limpiara y borrara del buffer
@@ -262,11 +269,15 @@ int logicaCartas(){
 			for (int i = 0; i < cartasPlayer.size(); i++){
 				cout<<cartasPlayerPinta[i]<<" "<<cartasPlayerStr[i]<<" ";
 			}
-			cout<<"\nLa carta visible del dealer es:\n";
+			cout<<"- Total: "<<sumaPlayer;
+			cout<<"\n\nLa carta visible del dealer es:\n";
 			cout<<cartasDealerPinta[0]<<" "<<cartasDealerStr[0]<<endl;
 			continue;
 		}
-		cout<<"\n";
+		
+		//Ignorar basura a la derecha de un input
+		cin.ignore(10000, '\n');
+		
 		switch(playCard){
 			//Hit, otra carta
 			case 1:{
@@ -311,21 +322,27 @@ int logicaCartas(){
 					}
 					
 					cout<<"Tu carta nueva es: "<<pintas[pinta]<<" "<<cartasStr[pinta][carta];
-					cout<<" - Suma: "<<sumaPlayer<<endl;
+					cout<<" - Total: "<<sumaPlayer<<endl;
 					
 					if (sumaPlayer > 21){
 						cout<<"Te pasate de 21! - Perdida automatica\n"<<endl<<"Las cartas del dealer fueron:";
 						for (int i = 0; i < cartasDealer.size(); i++){
-							cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
+							cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealerStr[i];
 						}
-						cout<<endl;
+						
+						sumaDealer = 0;
+						
+						for (int i = 0; i < cartasDealer.size(); i++){
+							sumaDealer += cartasDealer[i];
+						}
+						cout<<"\n\nTotal del dealer: "<<sumaDealer<<endl;
 						//Return 3 significa perder la partida 
 						return 3;
 					} else if (sumaPlayer == 21){
 						cout<<"Sacaste 21!\n";
-						cout<<"Suma del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron:";
+						cout<<"Total del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron:";
 						for (int i = 0; i < cartasDealer.size(); i++){
-							cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
+							cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealerStr[i];
 						}
 						cout<<endl;
 						//Return 1 significa ganar la partida
@@ -333,7 +350,7 @@ int logicaCartas(){
 					}
 				} else {
 					cout<<"Tu carta nueva es: "<<pintas[pinta]<<" "<<cartasStr[pinta][carta];
-					cout<<" - Suma: "<<sumaPlayer<<endl;
+					cout<<" - Total: "<<sumaPlayer<<endl;
 				}
 				
 				break;
@@ -360,6 +377,7 @@ int logicaCartas(){
 					}
 					
 					cartasDealer.push_back(cartas[pinta][carta]);
+					cartasDealerStr.push_back(cartasStr[pinta][carta]);
 					cartasDealerPinta.push_back(pintas[pinta]);
 					
 					//La carta actual se vuelve 0 para indicar que ya se usó
@@ -391,51 +409,39 @@ int logicaCartas(){
 					}
 				}
 				
+				sumaDealer = 0;
+				
+				for (int i = 0; i < cartasDealer.size(); i++){
+					sumaDealer += cartasDealer[i];
+				}
+				
+				cout<<"Las cartas del dealer fueron:";
+				for (int i = 0; i < cartasDealer.size(); i++){
+					cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealerStr[i];
+				}
+				cout<<"\n\nTotal del dealer: "<<sumaDealer<<endl;
+				cout<<"Total tuyo: "<<sumaPlayer<<endl<<endl;
+				
 				if (sumaDealer > 21){
-					cout<<"El dealer se paso de 21\n";
-					cout<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<"\nSuma: "<<sumaDealer<<endl;
+					cout<<"El dealer se paso de 21. Ganaste!\n";
 					//Return 1 significa ganar la partida
 					return 1;
 				}
 				
 				if (sumaDealer == sumaPlayer){
 					cout<<"Fue un empate!\n";
-					cout<<"Suma tuya: "<<sumaPlayer<<" - Suma del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<endl;
 					//Return 0 significa empate
 					return 0;
 				} else if (sumaDealer > sumaPlayer){
-					cout<<"El dealer estuvo mas cerca de 21\n";
-					cout<<"Suma del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<endl;
+					cout<<"El dealer estuvo mas cerca de 21. Perdiste!\n";
 					//Return 3 significa perder la partida 
 					return 3;
 				} else if (sumaPlayer == 21){
-					cout<<"Sacaste 21!\n";
-					cout<<"Suma del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<endl;
+					cout<<"Sacaste 21! Ganaste!\n";
 					//Return 1 significa ganar la partida
 					return 1;
 				} else if (sumaDealer < sumaPlayer){
-					cout<<"Estuviste mas cerca de 21 que el dealer\n";
-					cout<<"Suma del dealer: "<<sumaDealer<<" - Suma tuya: "<<sumaPlayer<<endl<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<endl;
+					cout<<"Estuviste mas cerca de 21 que el dealer. Ganaste!\n";
 					//Return 1 significa ganar la partida
 					return 1;
 				}
@@ -444,6 +450,10 @@ int logicaCartas(){
 			}
 			
 			case 3:{
+				if (saldo < *apuesta){
+					cout<<"El saldo no es suficiente para poder realizar un Double Down\n";
+					continue;
+				}
 				int pinta = distrPinta(gen);
 				int carta = distrCarta(gen);
 				while (cartas[pinta][carta] == 0){
@@ -485,21 +495,27 @@ int logicaCartas(){
 					}
 					
 					cout<<"Tu carta nueva es: "<<pintas[pinta]<<" "<<cartasStr[pinta][carta];
-					cout<<" - Suma: "<<sumaPlayer<<endl<<endl;
+					cout<<" - Total: "<<sumaPlayer<<endl<<endl;
 					
 					if (sumaPlayer > 21){
 						cout<<"Te pasate de 21! - Perdida automatica\n"<<endl<<"Las cartas del dealer fueron:";
 						for (int i = 0; i < cartasDealer.size(); i++){
-							cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
+							cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealerStr[i];
 						}
-						cout<<endl;
+						
+						sumaDealer = 0;
+						
+						for (int i = 0; i < cartasDealer.size(); i++){
+							sumaDealer += cartasDealer[i];
+						}
+						cout<<"\n\nTotal del dealer: "<<sumaDealer<<endl;
 						//Return 4 significa perder la partida en double down
 						return 4;
 					} else if (sumaPlayer == 21){
 						cout<<"Sacaste 21!\n";
-						cout<<"Suma del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron: ";
+						cout<<"Total del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron: ";
 						for (int i = 0; i < cartasDealer.size(); i++){
-							cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
+							cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealerStr[i];
 						}
 						cout<<endl;
 						//Return 5 significa ganar la partida en double down
@@ -508,7 +524,7 @@ int logicaCartas(){
 					
 				} else {
 					cout<<"Tu carta nueva es: "<<pintas[pinta]<<" "<<cartasStr[pinta][carta];
-					cout<<" - Suma: "<<sumaPlayer<<endl<<endl;
+					cout<<" - Total: "<<sumaPlayer<<endl<<endl;
 				}
 				
 				//Aqui se hace el stand automatico del double down
@@ -530,8 +546,8 @@ int logicaCartas(){
 						carta = distrCarta(gen);
 					}
 					
-					//cout<<pintas[pinta]<<" "<<cartasStr[pinta][carta]<<endl;
 					cartasDealer.push_back(cartas[pinta][carta]);
+					cartasDealerStr.push_back(cartasStr[pinta][carta]);
 					cartasDealerPinta.push_back(pintas[pinta]);
 
 					
@@ -564,51 +580,45 @@ int logicaCartas(){
 					}
 				}
 				
+				sumaDealer = 0;
+					
+				for (int i = 0; i < cartasDealer.size(); i++){
+					sumaDealer += cartasDealer[i];
+				}
+				
+				sumaDealer = 0;
+				
+				for (int i = 0; i < cartasDealer.size(); i++){
+					sumaDealer += cartasDealer[i];
+				}
+				
+				cout<<"Las cartas del dealer fueron:";
+				for (int i = 0; i < cartasDealer.size(); i++){
+					cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealerStr[i];
+				}
+				cout<<"\n\nTotal del dealer: "<<sumaDealer<<endl;
+				cout<<"Total tuyo: "<<sumaPlayer<<endl<<endl;
+				
 				if (sumaDealer > 21){
-					cout<<"El dealer se paso de 21\n";
-					cout<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<"\nSuma: "<<sumaDealer<<endl;
+					cout<<"El dealer se paso de 21. Ganaste!\n";
 					//Return 5 significa ganar la partida en double down
 					return 5;
 				}
 				
 				if (sumaDealer == sumaPlayer){
 					cout<<"Fue un empate!\n";
-					cout<<"Suma tuya: "<<sumaPlayer<<" - Suma del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<endl;
 					//Return 0 significa empate
 					return 0;
 				} else if (sumaDealer > sumaPlayer){
-					cout<<"El dealer estuvo mas cerca de 21\n";
-					cout<<"Suma del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<endl;
+					cout<<"El dealer estuvo mas cerca de 21. Perdiste\n";
 					//Return 4 significa perder la partida en double down
 					return 4;
 				} else if (sumaPlayer == 21){
-					cout<<"Sacaste 21!\n";
-					cout<<"Suma del dealer: "<<sumaDealer<<endl<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<endl;
+					cout<<"Sacaste 21! Ganaste!\n";
 					//Return 5 significa ganar la partida en double down
 					return 5;
 				} else if (sumaDealer < sumaPlayer){
-					cout<<"Estuviste mas cerca de 21 que el dealer\n";
-					cout<<"Suma del dealer: "<<sumaDealer<<" - Suma tuya: "<<sumaPlayer<<endl<<"Las cartas del dealer fueron:";
-					for (int i = 0; i < cartasDealer.size(); i++){
-						cout<<endl<<cartasDealerPinta[i]<<" "<<cartasDealer[i];
-					}
-					cout<<endl;
+					cout<<"Estuviste mas cerca de 21 que el dealer. Ganaste!\n";
 					//Return 5 significa ganar la partida en double down
 					return 5;
 				}
@@ -620,7 +630,8 @@ int logicaCartas(){
 				for (int i = 0; i < cartasPlayer.size(); i++){
 					cout<<cartasPlayerPinta[i]<<" "<<cartasPlayerStr[i]<<" ";
 				}
-				cout<<"\nLa carta visible del dealer es:\n";
+				cout<<"- Total: "<<sumaPlayer;
+				cout<<"\n\nLa carta visible del dealer es:\n";
 				cout<<cartasDealerPinta[0]<<" "<<cartasDealerStr[0]<<endl;
 				continue;
 			}
@@ -648,6 +659,8 @@ int opcionesGenerales(){
 			cout<<endl<<"Entrada invalida. Ingrese un NUMERO"<<endl<<endl;
 			continue;
 		}
+		
+		cin.ignore(10000, '\n');
 		/*switch(){
 			//Continuar Juego
 			case 1:
@@ -691,6 +704,9 @@ int main(){
 			opcion = 0;
 			continue;
 		}
+		
+		cin.ignore(10000, '\n');
+		
 		if (opcion != 1 && opcion != 2 && opcion != 3){
 			cout<<endl<<"\t\t\t\t\t\t\t\t       "<<"Opcion no valida"<<endl<<endl;
 			this_thread::sleep_for(chrono::milliseconds(2000));
@@ -712,10 +728,10 @@ int main(){
 	//Sistema de guardado
 	while (opcion == 1){
 		int apuestaActual = 0;
-		logicaApuestas(saldo, "bet", "", &apuestaActual);
+		saldo = logicaApuestas(saldo, "bet", "", &apuestaActual);
 		//Toca agregar lo de continuar, guardar, etc. para poder hacer un while que corra
 		//el juego mientras se elija continuar. Que actue con respecto a la decisión del jugador
-		int resultado = logicaCartas();
+		int resultado = logicaCartas(saldo, &apuestaActual);
 		if (resultado == 0){
 			saldo = logicaApuestas(saldo, "calc", "E", &apuestaActual);
 		} else if (resultado == 1){
