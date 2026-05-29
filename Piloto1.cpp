@@ -1,4 +1,6 @@
 #include <iostream>
+#include <ctime>
+#include <fstream>
 #include <vector>
 #include <chrono>
 #include <thread>
@@ -429,7 +431,7 @@ int logicaCartas(int saldo, int* apuesta){
 				}
 				
 				if (sumaDealer == sumaPlayer){
-					cout<<"Fue un empate!\n";
+					cout<<"Fue un empate! - No pierdes la apuesta\n";
 					//Return 0 significa empate
 					return 0;
 				} else if (sumaDealer > sumaPlayer){
@@ -606,7 +608,7 @@ int logicaCartas(int saldo, int* apuesta){
 				}
 				
 				if (sumaDealer == sumaPlayer){
-					cout<<"Fue un empate!\n";
+					cout<<"Fue un empate! - No pierdes la apuesta\n";
 					//Return 0 significa empate
 					return 0;
 				} else if (sumaDealer > sumaPlayer){
@@ -641,16 +643,16 @@ int logicaCartas(int saldo, int* apuesta){
 	return 0;
 }
 
-int opcionesGenerales(){
+int opcionesGenerales(int* opcion, int saldoGuardar){
 	while (true){
 		cout<<"Que desea hacer?\n";
 		cout<<"\t1. Continuar la partida\n";
-		cout<<"\t2. Guardar la partida\n";
-		cout<<"\t3. Guardar y salir\n";
-		cout<<"\t4. Salir sin guardar\n";
+		cout<<"\t2. Resetear Juego (Soft Reset)\n";
+		cout<<"\t3. Guardar la partida\n";
+		cout<<"\t4. Guardar y salir\n";
+		cout<<"\t5. Salir\n";
 		cout<<endl<<"Digite su opcion: ";
-		int opcionGeneral;
-		cin>>opcionGeneral;
+		cin>>*opcion;
 		if (cin.fail()){
 			cin.clear();
 			//El primer parametro dentro del ignore es una cantidad de letras que el programa limpiara y borrara del buffer
@@ -661,94 +663,208 @@ int opcionesGenerales(){
 		}
 		
 		cin.ignore(10000, '\n');
-		/*switch(){
+		
+		switch(*opcion){
 			//Continuar Juego
-			case 1:
+			case 1:{
+				return 0;
+			}
 			
+			//Resetear
+			case 2:{
+				return 1;
+			}
+				
 			//Guardar Juego
-			case 2:
-			
+			case 3:{
+				ofstream saveFile("input-output/saveFile.txt");
+				fstream recordFile;
+				recordFile.open("input-output/gameRecords.txt", ios::out | ios::app);
+				if (recordFile.is_open()){
+					//Estas lineas de codigo toman el tiempo actual del computador
+					time_t now = time(nullptr);
+					tm* local_time = localtime(&now);
+					char buffer[11];
+					strftime(buffer, sizeof(buffer), "%Y/%m/%d", local_time);
+					
+					//Esto imprime en el archivo cada partida guardada
+					recordFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer<<endl;
+					saveFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer;
+				} else {
+					cout<<"\nNo se pudo abrir el archivo";
+				}
+				cout<<"El juego se ha guardado con exito\n\n";
+				return 2;
+			}
+				
 			//Guardar y Salir
-			case 3:
+			case 4:{
+				ofstream saveFile("input-output/saveFile.txt");
+				fstream recordFile;
+				recordFile.open("input-output/gameRecords.txt", ios::out | ios::app);
+				if (recordFile.is_open()){
+					//Estas lineas de codigo toman el tiempo actual del computador
+					time_t now = time(nullptr);
+					tm* local_time = localtime(&now);
+					char buffer[11];
+					strftime(buffer, sizeof(buffer), "%Y/%m/%d", local_time);
+					
+					//Esto imprime en el archivo cada partida guardada
+					recordFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer<<endl;
+					saveFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer<<endl;
+				} else {
+					cout<<"\nNo se pudo abrir el archivo";
+				}
+				cout<<"El juego se ha guardado con exito\n\n";
+				this_thread::sleep_for(chrono::milliseconds(2000));
+				return 3;
+			}
+				
+			//Salir
+			case 5:{
+				cout<<"\nSalio con exito!\n";
+				return 4;
+			}
+				
+			default:{
+				break;
+			}
 			
-			//Salir Sin Guardar
-			case 4:
-			
-			default:
-				cout<<"Entrada invalida. No esta dentro de las opciones"<<endl<<endl;
-				cout<<"¿Que desea hacer?\n";
-				cout<<"\t1. Continuar la partida\n";
-				cout<<"\t2. Guardar la partida\n";
-				cout<<"\t3. Guardar y salir\n";
-				cout<<"\t4. Salir sin guardar\n";
-				continue;
-		}*/
+			//Break salvavidas
+			break;
+		}
+		
+		//Return salvavidas
+		return 0;
 	}
 }
 
 //Codigo General
 int main(){
-	int opcion;
-	do{
-		menuGUI();
-		cin>>opcion;
-		if (cin.fail()){
-			cin.clear();
-			//El primer parametro dentro del ignore es una cantidad de letras que el programa limpiara y borrara del buffer
-			//El segundo es el limite, en este caso, cuando se encuentre un \n se simpia y se boora todo del buffer
+	int opcionGeneral = 0;
+	while (opcionGeneral != 3 && opcionGeneral != 4){
+		int opcion = 0;
+		do{
+			menuGUI();
+			cin>>opcion;
+			if (cin.fail()){
+				cin.clear();
+				//El primer parametro dentro del ignore es una cantidad de letras que el programa limpiara y borrara del buffer
+				//El segundo es el limite, en este caso, cuando se encuentre un \n se simpia y se boora todo del buffer
+				cin.ignore(10000, '\n');
+				cout<<endl<<"\t\t\t\t\t\t\t       Introduzca un NUMERO, por favor"<<endl<<endl;
+				this_thread::sleep_for(chrono::milliseconds(2000));
+				//Pendiente con esto de aqui abajo
+				cout<<"\033[2J\033[3J\033[H"<<flush;
+				opcion = 0;
+				continue;
+			}
+			
 			cin.ignore(10000, '\n');
-			cout<<endl<<"\t\t\t\t\t\t\t       Introduzca un NUMERO, por favor"<<endl<<endl;
-			this_thread::sleep_for(chrono::milliseconds(2000));
-			//Pendiente con esto de aqui abajo
+			
+			if (opcion != 1 && opcion != 2 && opcion != 3){
+				cout<<endl<<"\t\t\t\t\t\t\t\t       "<<"Opcion no valida"<<endl<<endl;
+				this_thread::sleep_for(chrono::milliseconds(2000));
+			}
+			
+			//ANSI Escape Sequences - Toca buscar que es eso para el informe
+			//"\033[2J" Limpia la pantalla visible
+			//"\033[3J" Limpia lo que se imprimio (el buffer)
+			//"\033[H" te lleva hasta el orgien de la impresion por consola (Esquina superior izq.)
 			cout<<"\033[2J\033[3J\033[H"<<flush;
+			
+		} while (opcion != 1 && opcion != 2 && opcion != 3);
+		
+		if (menuOpciones(opcion) == 0){
+			break;
+		}
+		
+		//Saldo Inicial
+		int saldo;
+		if (opcion == 1){
+			saldo = 100;
+		} else if (opcion == 2){
+			//Saldo Guardado
+			ifstream loadFile("input-output/saveFile.txt");
+			
+			//El operados >> descarta automaticamente cualquier espacio o cantidad de espacios en blanco
+			//Lo que permite, o permitira editar sin problema el saveFile para partidas personalizadas
+			string line;
+			string etiqueta;
+			int saveSaldo;
+			
+			getline(loadFile, line);
+			stringstream data(line);
+			
+			//Así extrae, es necesario estudiar esto para el informe
+			data >> etiqueta >> saveSaldo;
+			
+			saldo = saveSaldo;
+		}
+		
+		
+		//Sistema de guardado
+		while (opcion == 1 || opcion == 2){
+			int apuestaActual = 0;
+			saldo = logicaApuestas(saldo, "bet", "", &apuestaActual);
+			//Toca agregar lo de continuar, guardar, etc. para poder hacer un while que corra
+			//el juego mientras se elija continuar. Que actue con respecto a la decisión del jugador
+			int resultado = logicaCartas(saldo, &apuestaActual);
+			if (resultado == 0){
+				saldo = logicaApuestas(saldo, "calc", "E", &apuestaActual);
+			} else if (resultado == 1){
+				saldo = logicaApuestas(saldo, "calc", "W", &apuestaActual);
+			} else if (resultado == 2){
+				saldo = logicaApuestas(saldo, "calc", "W21", &apuestaActual);
+			} else if (resultado == 3){
+				saldo = logicaApuestas(saldo, "calc", "L", &apuestaActual);
+			} else if (resultado == 4){
+				saldo = logicaApuestas(saldo, "calc", "LDD", &apuestaActual);
+			} else if (resultado == 5){
+				saldo = logicaApuestas(saldo, "calc", "WDD", &apuestaActual);
+			}
+			cout<<"\nTu nuevo saldo es: $"<<saldo<<endl<<endl;
+			
+			if (saldo <= 0){
+				cout<<"Perdiste el juego!\n";
+				this_thread::sleep_for(chrono::milliseconds(2000));
+				opcionGeneral = 1;
+				if (opcionGeneral == 1){
+					break;
+				}
+			}
+			
+			while (true){
+				opcionGeneral = opcionesGenerales(&opcionGeneral, saldo);
+				if (opcionGeneral == 0){
+					break;
+				} else if (opcionGeneral == 1){
+					break;
+				} else if (opcionGeneral == 2){
+					break;
+				} else if (opcionGeneral == 3){
+					break;
+				} else if (opcionGeneral == 4){
+					break;
+				}
+			}
+			
+			if (opcionGeneral == 1 || opcionGeneral == 3 || opcionGeneral == 4){
+				break;
+			} else if (opcionGeneral == 0 || opcionGeneral == 2){
+				continue;
+			}
+		}
+		
+		if (opcionGeneral == 1){
+			cout<<"\033[2J\033[3J\033[H"<<flush;
+			//Hay que resetear las variables de control para que no tome los valores anteriores
 			opcion = 0;
+			opcionGeneral = 0;
 			continue;
+		} else if (opcionGeneral == 3 || opcionGeneral == 4){
+			break;
 		}
-		
-		cin.ignore(10000, '\n');
-		
-		if (opcion != 1 && opcion != 2 && opcion != 3){
-			cout<<endl<<"\t\t\t\t\t\t\t\t       "<<"Opcion no valida"<<endl<<endl;
-			this_thread::sleep_for(chrono::milliseconds(2000));
-		}
-		
-		//ANSI Escape Sequences - Toca buscar que es eso para el informe
-		//"\033[2J" Limpia la pantalla visible
-		//"\033[3J" Limpia lo que se imprimio (el buffer)
-		//"\033[H" te lleva hasta el orgien de la impresion por consola (Esquina superior izq.)
-		cout<<"\033[2J\033[3J\033[H"<<flush;
-		
-	} while (opcion != 1 && opcion != 2 && opcion != 3);
-	
-	menuOpciones(opcion);
-	
-	//Saldo Inicial
-	int saldo = 100;
-	
-	//Sistema de guardado
-	while (opcion == 1){
-		int apuestaActual = 0;
-		saldo = logicaApuestas(saldo, "bet", "", &apuestaActual);
-		//Toca agregar lo de continuar, guardar, etc. para poder hacer un while que corra
-		//el juego mientras se elija continuar. Que actue con respecto a la decisión del jugador
-		int resultado = logicaCartas(saldo, &apuestaActual);
-		if (resultado == 0){
-			saldo = logicaApuestas(saldo, "calc", "E", &apuestaActual);
-		} else if (resultado == 1){
-			saldo = logicaApuestas(saldo, "calc", "W", &apuestaActual);
-		} else if (resultado == 2){
-			saldo = logicaApuestas(saldo, "calc", "W21", &apuestaActual);
-		} else if (resultado == 3){
-			saldo = logicaApuestas(saldo, "calc", "L", &apuestaActual);
-		} else if (resultado == 4){
-			saldo = logicaApuestas(saldo, "calc", "LDD", &apuestaActual);
-		} else if (resultado == 5){
-			saldo = logicaApuestas(saldo, "calc", "WDD", &apuestaActual);
-		}
-		cout<<"\nTu nuevo saldo es: $"<<saldo<<endl<<endl;
-		
-		opcionesGenerales();
 	}
-	
 	return 0;
 }
