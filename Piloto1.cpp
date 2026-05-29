@@ -73,6 +73,7 @@ int menuOpciones(int opcion){
 			return opcion;
 		case 3:
 			cout<<endl<<"\t\t\t\t\t\t\t\t      "<<"Saliendo del Juego";
+			this_thread::sleep_for(chrono::milliseconds(5000));
 			return 0;
 		
 		//Return temporal como salva vidas
@@ -688,8 +689,17 @@ int opcionesGenerales(int* opcion, int saldoGuardar){
 					strftime(buffer, sizeof(buffer), "%Y/%m/%d", local_time);
 					
 					//Esto imprime en el archivo cada partida guardada
-					recordFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer<<endl;
+					recordFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer;
 					saveFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer;
+					
+					//Estas lineas toman la hora actual del PC
+					char time_string[9];
+					strftime(time_string, sizeof(time_string), "%X", local_time);
+					
+					//Imprime la hora en cada archivo
+					recordFile<<" - Hora: "<<time_string<<endl;
+					saveFile<<" - Hora: "<<time_string<<endl;
+					
 				} else {
 					cout<<"\nNo se pudo abrir el archivo";
 				}
@@ -710,8 +720,17 @@ int opcionesGenerales(int* opcion, int saldoGuardar){
 					strftime(buffer, sizeof(buffer), "%Y/%m/%d", local_time);
 					
 					//Esto imprime en el archivo cada partida guardada
-					recordFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer<<endl;
-					saveFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer<<endl;
+					recordFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer;
+					saveFile<<"Saldo: "<<saldoGuardar<<" - Fecha: "<<buffer;
+					
+					//Estas lineas toman la hora actual del PC
+					char time_string[9];
+					strftime(time_string, sizeof(time_string), "%X", local_time);
+					
+					//Imprime la hora en cada archivo
+					recordFile<<" - Hora: "<<time_string<<endl;
+					saveFile<<" - Hora: "<<time_string<<endl;
+					
 				} else {
 					cout<<"\nNo se pudo abrir el archivo";
 				}
@@ -827,7 +846,7 @@ int main(){
 			
 			if (saldo <= 0){
 				cout<<"Perdiste el juego!\n";
-				this_thread::sleep_for(chrono::milliseconds(2000));
+				this_thread::sleep_for(chrono::milliseconds(10000));
 				opcionGeneral = 1;
 				if (opcionGeneral == 1){
 					break;
