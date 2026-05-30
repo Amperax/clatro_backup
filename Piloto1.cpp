@@ -1,4 +1,6 @@
 #include <iostream>
+#include <windows.h>
+#include <mmsystem.h>
 #include <ctime>
 #include <fstream>
 #include <vector>
@@ -96,12 +98,9 @@ int logicaApuestas(int saldoRonda, string accion, string codigo, int* apuesta){
 			cin>>*apuesta;
 			if (cin.fail()){
 				cin.clear();
-				//El primer parametro dentro del ignore es una cantidad de letras que el programa limpiara y borrara del buffer
-				//El segundo es el limite, en este caso, cuando se encuentre un \n se simpia y se boora todo del buffer
 				cin.ignore(10000, '\n');
 				cout<<endl<<"Entrada invalida. Debe ser un numero entero."<<endl<<endl;
 				this_thread::sleep_for(chrono::milliseconds(2000));
-				//Pendiente con esto de aqui abajo
 				cout<<"\033[2J\033[3J\033[H"<<flush;
 				continue;
 			}
@@ -158,10 +157,11 @@ int logicaCartas(int saldo, int* apuesta){
 	{"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"}
 	};
 	
-	/*Para generar un valor aleatorio con cada ejecución, la semilla sera los microsegundos
-	actuales del computador para poder variar constantemente la semilla
+	/*Para generar un valor aleatorio con cada ejecución, la semilla seran los microsegundos
+	actuales del computador para poderla hacer variar constantemente.
 	"unsigned" llama especificamente a un numero entero POSITIVO o 0, es un tipo de variable especial
-	Se una porque el motor matematico que genera la semiila (mt19937) solo puede tomar números no negativos*/
+	Se usa porque el motor matematico que genera la semiila (mt19937) solo puede tomar números no negativos*/
+	
 	unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
 		
 	//Se inicializa un valor aleatorio (semilla, generador de valores y controlador de rango)
@@ -225,7 +225,7 @@ int logicaCartas(int saldo, int* apuesta){
 		}
 	}
 	
-	//Si llegaste a 21 de una, analiza si el dealer también lo hizo
+	//Si llegaste a 21 de una, analiza si el dealer también lo hizo (empate)
 	//Si no lo hizo, es victoria instantanea para el jugador
 	sumaPlayer = 0;
 	int sumaDealer = 0;
@@ -264,8 +264,9 @@ int logicaCartas(int saldo, int* apuesta){
 		cout<<"\n";
 		if (cin.fail()){
 			cin.clear();
-			//El primer parametro dentro del ignore es una cantidad de letras que el programa limpiara y borrara del buffer
-			//El segundo es el limite, en este caso, cuando se encuentre un \n se simpia y se boora todo del buffer
+			/*El primer parametro dentro del ignore es una cantidad de letras que el 
+			programa limpiara y borrara del buffer. El segundo es el limite, en este caso, 
+			cuando se encuentre un \n se simpia y se borra todo del buffer*/
 			cin.ignore(10000, '\n');
 			cout<<endl<<"Accion invalida. Por favor introduzca un numero de las opciones (1, 2 o 3)."<<endl<<endl;
 			cout<<"Sus cartas son:\n";
@@ -640,6 +641,7 @@ int logicaCartas(int saldo, int* apuesta){
 			}
 		}
 	}
+	
 	//Return salvavidas por si pasa algo
 	return 0;
 }
@@ -649,17 +651,15 @@ int opcionesGenerales(int* opcion, int saldoGuardar){
 		cout<<"Que desea hacer?\n";
 		cout<<"\t1. Continuar la partida\n";
 		cout<<"\t2. Resetear Juego (Soft Reset)\n";
-		cout<<"\t3. Guardar la partida\n";
+		cout<<"\t3. Guardar la partida y Continuar\n";
 		cout<<"\t4. Guardar y salir\n";
 		cout<<"\t5. Salir\n";
 		cout<<endl<<"Digite su opcion: ";
 		cin>>*opcion;
 		if (cin.fail()){
 			cin.clear();
-			//El primer parametro dentro del ignore es una cantidad de letras que el programa limpiara y borrara del buffer
-			//El segundo es el limite, en este caso, cuando se encuentre un \n se simpia y se boora todo del buffer
 			cin.ignore(10000, '\n');
-			cout<<endl<<"Entrada invalida. Ingrese un NUMERO"<<endl<<endl;
+			cout<<endl<<"Entrada invalida. Ingrese un NUMERO o una opcion VALIDA"<<endl<<endl;
 			continue;
 		}
 		
@@ -734,6 +734,7 @@ int opcionesGenerales(int* opcion, int saldoGuardar){
 				} else {
 					cout<<"\nNo se pudo abrir el archivo";
 				}
+				
 				cout<<"El juego se ha guardado con exito\n\n";
 				this_thread::sleep_for(chrono::milliseconds(2000));
 				return 3;
@@ -746,10 +747,10 @@ int opcionesGenerales(int* opcion, int saldoGuardar){
 			}
 				
 			default:{
-				break;
+				cout<<endl<<"Entrada invalida. Ingrese un NUMERO o una opcion VALIDA"<<endl<<endl;
+				continue;
 			}
 			
-			//Break salvavidas
 			break;
 		}
 		
@@ -758,8 +759,86 @@ int opcionesGenerales(int* opcion, int saldoGuardar){
 	}
 }
 
+/*
+- Este es el codigo para la música del juego
+- Se declaran fuera de la main al ser variables globales
+- Playlist de canciones (balatro, luigi's casino, openning title SM64 Lofi version) respectivamente
+*/
+
+string playlist[] = {"music/cancion1.mp3", "music/cancion2.mp3", "music/cancion3.mp3"};
+int totalCanciones = 3;
+int cancionActual = 0;
+
+/*
+- Paran la música y la cierran ("stop" y "close"), son palabras del MCI (media control interface) de windows
+- Son codigos predeterminados para indicar acciones de reproducción de contenidos (play, stop, pause, resume...)
+- NULL es como decirle a windows "No necesito que me regreses información" (El primer NULL)
+- El "0" es para tener un buffer (almacenamiento temporal) de lo que sea que reciba el primer NULL (como es NULL
+no guarda ninguna información)
+- El segundo NULL es para una función de programación avanzada
+*/
+
+void detenerMusica(){
+	mciSendString("stop musica", NULL, 0, NULL);
+	mciSendString("close musica", NULL, 0, NULL);
+}
+
+void reproducirMusica(){
+	//Primero se tiene que parar cualquier musica que haya estado sonando
+	detenerMusica();
+	
+	/*
+	- Se abre la canción acutal y se le apoda "musica" para que el MCI la pueda controlar
+	- type mpegvideo: le cuenta al sistema que el archivo a abrir es un audio o video comprimido (MP3 ó MP4)
+	- alias musica: se le asigna el alias de musica a la canción actual para no tener que ingresar la ruta de
+	nombre todas las veces que nos queramos referir a ese archivo
+	*/
+	
+	string comando = "open \"" + playlist[cancionActual] + "\" type mpegvideo alias musica";
+	
+	/*
+	- .c_str() -> convierte un "objeto moderno" (ej. string) en un arreglo tradicional de caracteres
+	- Como windows está montado sobre C, es necesario hacer esta traducción para que el codigo pueda leer
+	la ruta del archivo sin problema, ya que C no reconoce strings, solo arreglos de caracteres
+	*/
+	
+	mciSendString(comando.c_str(), NULL, 0, NULL);
+	mciSendString("play musica", NULL, 0, NULL);
+}
+
+//Esta función permite que el juego use la playlist para reproducir la música
+void revisarLoopMusica(){
+	
+	/*
+	- Este buffer permite recibir el dato que windows nos de con respecto al estado del archivo
+	si está detenido manda un "stopped", reproduciendo un "playing", etc. Con el fin de guardar
+	el estado del archivo, se crea un buffer de 128 bytes que sea lo suficientemente grande para guardar
+	las palabras clave que mande el MCI de windows, ya que por letra es un byte y por palabras entre 7 y 8 bytes
+	*/
+	
+	char buffer[128];
+	
+	mciSendString("status musica mode", buffer, sizeof(buffer), NULL);
+	string estado(buffer);
+	
+	if (estado.find("stopped") != string::npos){
+		cancionActual += 1;
+		
+		if (cancionActual >= totalCanciones){
+			cancionActual = 0;
+		}
+		
+		//Reproduce la canción con el nuevo indice (la siguiente canción o el bucle)
+		reproducirMusica();
+	}
+}
+
 //Codigo General
 int main(){
+	//Inicia a reproducir la música
+	reproducirMusica();
+	
+	//Inicia el juego
 	int opcionGeneral = 0;
 	while (opcionGeneral != 3 && opcionGeneral != 4){
 		int opcion = 0;
@@ -768,12 +847,9 @@ int main(){
 			cin>>opcion;
 			if (cin.fail()){
 				cin.clear();
-				//El primer parametro dentro del ignore es una cantidad de letras que el programa limpiara y borrara del buffer
-				//El segundo es el limite, en este caso, cuando se encuentre un \n se simpia y se boora todo del buffer
 				cin.ignore(10000, '\n');
 				cout<<endl<<"\t\t\t\t\t\t\t       Introduzca un NUMERO, por favor"<<endl<<endl;
 				this_thread::sleep_for(chrono::milliseconds(2000));
-				//Pendiente con esto de aqui abajo
 				cout<<"\033[2J\033[3J\033[H"<<flush;
 				opcion = 0;
 				continue;
@@ -786,7 +862,7 @@ int main(){
 				this_thread::sleep_for(chrono::milliseconds(2000));
 			}
 			
-			//ANSI Escape Sequences - Toca buscar que es eso para el informe
+			//ANSI Escape Sequences
 			//"\033[2J" Limpia la pantalla visible
 			//"\033[3J" Limpia lo que se imprimio (el buffer)
 			//"\033[H" te lleva hasta el orgien de la impresion por consola (Esquina superior izq.)
@@ -803,10 +879,10 @@ int main(){
 		if (opcion == 1){
 			saldo = 100;
 		} else if (opcion == 2){
-			//Saldo Guardado
+			//Saldo Guardado - de Carga
 			ifstream loadFile("input-output/saveFile.txt");
 			
-			//El operados >> descarta automaticamente cualquier espacio o cantidad de espacios en blanco
+			//El operador >> descarta automaticamente cualquier espacio o cantidad de espacios en blanco
 			//Lo que permite, o permitira editar sin problema el saveFile para partidas personalizadas
 			string line;
 			string etiqueta;
@@ -815,19 +891,19 @@ int main(){
 			getline(loadFile, line);
 			stringstream data(line);
 			
-			//Así extrae, es necesario estudiar esto para el informe
+			//Así extraen los datos, se pide un string y un int desde el stringstream
 			data >> etiqueta >> saveSaldo;
 			
 			saldo = saveSaldo;
 		}
 		
 		
-		//Sistema de guardado
+		//Sistema general de juego
 		while (opcion == 1 || opcion == 2){
+			//Revisa si hay que saltar de canción o no
+			revisarLoopMusica();
 			int apuestaActual = 0;
 			saldo = logicaApuestas(saldo, "bet", "", &apuestaActual);
-			//Toca agregar lo de continuar, guardar, etc. para poder hacer un while que corra
-			//el juego mientras se elija continuar. Que actue con respecto a la decisión del jugador
 			int resultado = logicaCartas(saldo, &apuestaActual);
 			if (resultado == 0){
 				saldo = logicaApuestas(saldo, "calc", "E", &apuestaActual);
